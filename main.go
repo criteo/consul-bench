@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	consul "github.com/hashicorp/consul/api"
@@ -14,11 +15,17 @@ func main() {
 	serviceName := flag.String("service", "srv", "Service to watch")
 	registerInstances := flag.Int("register", 0, "Register N -service instances")
 	flapInterval := flag.Duration("flap-interval", 0, "If -register is given, flap each instance between critical and passing state on given interval")
+	token := flag.String("token", "", "ACL token")
 	watchers := flag.Int("watchers", 1, "Number of concurrnet watchers on service")
 	flag.Parse()
 
+	if *token == "" {
+		*token = os.Getenv("ACL_TOKEN")
+	}
+
 	c, err := consul.NewClient(&consul.Config{
 		Address: *consulAddr,
+		Token:   *token,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -26,17 +33,19 @@ func main() {
 
 	startCh := make(chan struct{})
 
+	checksTTL := *flapInterval * 3
+
 	if *registerInstances > 0 {
 		log.Printf("Registering %d %s instances...\n", *registerInstances, *serviceName)
 
 		for instanceID := 0; instanceID < *registerInstances; instanceID++ {
 			err := c.Agent().ServiceRegister(&consul.AgentServiceRegistration{
-				Name: "srv",
-				ID:   fmt.Sprintf("srv-%d", instanceID),
+				Name: *serviceName,
+				ID:   fmt.Sprintf("%s-%d", *serviceName, instanceID),
 				Checks: []*consul.AgentServiceCheck{
 					{
 						CheckID: fmt.Sprintf("check-%d", instanceID),
-						TTL:     "1m",
+						TTL:     checksTTL.String(),
 						Status:  consul.HealthCritical,
 					},
 				},
