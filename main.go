@@ -44,9 +44,10 @@ func main() {
 				ID:   fmt.Sprintf("%s-%d", *serviceName, instanceID),
 				Checks: []*consul.AgentServiceCheck{
 					{
-						CheckID: fmt.Sprintf("check-%d", instanceID),
-						TTL:     checksTTL.String(),
-						Status:  consul.HealthCritical,
+						CheckID:                        fmt.Sprintf("check-%d", instanceID),
+						TTL:                            checksTTL.String(),
+						Status:                         consul.HealthCritical,
+						DeregisterCriticalServiceAfter: "10m",
 					},
 				},
 			})
