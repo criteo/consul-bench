@@ -1,4 +1,4 @@
-package main
+package bench
 
 import (
 	"fmt"
@@ -9,10 +9,10 @@ import (
 	consul "github.com/hashicorp/consul/api"
 )
 
-func DeregisterServices(client *consul.Client, serviceName string) error {
+func (b *Bench) DeregisterServices(serviceName string) error {
 	log.Printf("Deregistering service %s...", serviceName)
 
-	services, err := client.Agent().Services()
+	services, err := b.httpClient.Agent().Services()
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func DeregisterServices(client *consul.Client, serviceName string) error {
 		}
 
 		log.Printf("Deregistering %s", s.ID)
-		err := client.Agent().ServiceDeregister(s.ID)
+		err := b.httpClient.Agent().ServiceDeregister(s.ID)
 		if err != nil {
 			return err
 		}
@@ -32,16 +32,13 @@ func DeregisterServices(client *consul.Client, serviceName string) error {
 	return nil
 }
 
-func RegisterServices(client *consul.Client, serviceName string, count int, flapInterval time.Duration, stats chan Stat) error {
+func (b *Bench) RegisterServices(serviceName string, count int) error {
 	log.Printf("Registering %d %s instances...\n", count, serviceName)
 
-	checksTTL := flapInterval * 3
-	if checksTTL == 0 {
-		checksTTL = 10 * time.Minute
-	}
+	checksTTL := 15 * time.Minute
 
 	for instanceID := 0; instanceID < count; instanceID++ {
-		err := client.Agent().ServiceRegister(&consul.AgentServiceRegistration{
+		err := b.httpClient.Agent().ServiceRegister(&consul.AgentServiceRegistration{
 			Name: serviceName,
 			ID:   fmt.Sprintf("%s-%d", serviceName, instanceID),
 			Checks: []*consul.AgentServiceCheck{
@@ -58,6 +55,10 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 		}
 	}
 
+	return nil
+}
+
+func (b *Bench) FlapServices(serviceName string, count int, flapInterval time.Duration, stats chan Stat) error {
 	flapping := flapInterval > 0
 
 	if flapping {
@@ -66,13 +67,13 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 
 	waitTime := flapInterval
 	if waitTime <= 0 {
-		waitTime = checksTTL / 2
+		waitTime = 7 * time.Minute
 	}
 
 	var fps int32
 
 	log.Println("Retrieving checks states")
-	checks, err := client.Agent().Checks()
+	checks, err := b.httpClient.Agent().Checks()
 	if err != nil {
 		return err
 	}
@@ -80,7 +81,7 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 	for instanceID := 0; instanceID < count; instanceID++ {
 		go func(instanceID int) {
 			time.Sleep((flapInterval / time.Duration(count)) * time.Duration(instanceID))
-			client.Agent().Checks()
+			b.httpClient.Agent().Checks()
 
 			var lastStatus bool
 			checkName := fmt.Sprintf("check-%d", instanceID)
@@ -95,9 +96,9 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 
 				// flap check if flapping is enabled, else just keep check alive
 				if lastStatus && flapping {
-					f = client.Agent().FailTTL
+					f = b.httpClient.Agent().FailTTL
 				} else {
-					f = client.Agent().PassTTL
+					f = b.httpClient.Agent().PassTTL
 				}
 
 				err := f(fmt.Sprintf("check-%d", instanceID), "")
