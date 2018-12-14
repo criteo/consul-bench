@@ -33,16 +33,27 @@ If you want to immediatly deregister them, use `consul-bench -service my-service
 Usage of consul-bench:
   -consul string
     	Consul address (default "127.0.0.1:8500")
+  -dc string
+    	When using rpc, the consul datacenter (default "dc1")
   -deregister
     	Deregister all instances of -service
   -flap-interval duration
     	If -register is given, flap each instance between critical and passing state on given interval
+  -query-stale
+    	Run stale blocking queries
+  -query-wait duration
+    	Bloquing queries max wait time (default 10m0s)
   -register int
     	Register N -service instances
+  -rpc
+    	Use RPC server calls instead of agent HTTP
+  -rpc-addr string
+    	When using rpc, the consul rpc addr (default "127.0.0.1:8300")
   -service string
     	Service to watch (default "srv")
   -token string
     	ACL token
   -watchers int
     	Number of concurrnet watchers on service (default 1)
+
 ```
