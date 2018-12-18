@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -16,27 +16,26 @@ import (
 
 type queryFn func(uint64) (uint64, error)
 
-func RunQueries(fn queryFn, count int, stats chan Stat) error {
+func RunQueries(fn queryFn, count int, lateRatio float64, stats chan Stat, done chan struct{}) error {
 	log.Println("Starting", count, "watchers...")
 
 	var qps int32
+	var lateQps int32
 
 	errs := make(chan error, 1)
-	done := make(chan struct{})
-	var wg sync.WaitGroup
 	for i := 0; i < count; i++ {
-		wg.Add(1)
 		go func() {
-			defer wg.Done()
-			select {
-			case <-done:
-				return
-			default:
-			}
-
-			index := uint64(0)
+			index := uint64(1)
 			var err error
+			var i int
 			for {
+				if rand.Float64() <= lateRatio {
+					atomic.AddInt32(&lateQps, 1)
+					index -= 50
+					if index <= 0 {
+						index = 1
+					}
+				}
 				index, err = fn(index)
 				if err != nil {
 					select {
@@ -46,17 +45,21 @@ func RunQueries(fn queryFn, count int, stats chan Stat) error {
 					return
 				}
 				atomic.AddInt32(&qps, 1)
+				i++
 			}
 		}()
 	}
 	go func() {
 		for range time.Tick(time.Second) {
 			c := atomic.SwapInt32(&qps, 0)
+			lc := atomic.SwapInt32(&lateQps, 0)
 			stats <- Stat{"QPS", float64(c)}
+			stats <- Stat{"Late QPS", float64(lc)}
 		}
 	}()
 	log.Println("Watchers started.")
-	wg.Wait()
+
+	<-done
 	select {
 	case err := <-errs:
 		return err
