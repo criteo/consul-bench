@@ -4,6 +4,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
+	"sync"
 	"time"
 
 	consul "github.com/hashicorp/consul/api"
@@ -22,6 +24,9 @@ func main() {
 	stale := flag.Bool("query-stale", false, "Run stale blocking queries")
 	token := flag.String("token", "", "ACL token")
 	watchers := flag.Int("watchers", 1, "Number of concurrnet watchers on service")
+	monitor := flag.Int("monitor", 0, "Consul PID")
+	runtime := flag.Duration("time", 0, "Time to run the benchmark")
+	latepc := flag.Float64("late-ratio", 0, "Ratio of late callers")
 	flag.Parse()
 
 	if *token == "" {
@@ -51,6 +56,24 @@ func main() {
 		return
 	}
 
+	done := make(chan struct{})
+	var wg sync.WaitGroup
+
+	if *monitor > 0 {
+		wg.Add(1)
+		go func() {
+			Monitor(int32(*monitor), stats, done)
+			wg.Done()
+		}()
+	}
+
+	if *runtime > 0 {
+		go func() {
+			time.Sleep(*runtime)
+			close(done)
+		}()
+	}
+
 	var qf queryFn
 	if !*useRPC {
 		qf = QueryAgent(c, *serviceName, *wait, *stale)
@@ -58,7 +81,26 @@ func main() {
 		qf = QueryServer(*rpcAddr, *dc, *serviceName, *wait, *stale)
 	}
 
-	go RunQueries(qf, *watchers, stats)
+	wg.Add(1)
+	go func() {
+		RunQueries(qf, *watchers, *latepc, stats, done)
+		wg.Done()
+	}()
 
-	DisplayStats(stats)
+	wg.Add(1)
+	go func() {
+		DisplayStats(stats, done)
+		wg.Done()
+	}()
+
+	go func() {
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, os.Interrupt)
+		<-signals
+		close(done)
+	}()
+
+	<-done
+	wg.Wait()
+	os.Exit(0)
 }
