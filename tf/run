@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+cd $DIR/config/bench
+
+terraform init
+
+terraform apply -auto-approve
+
+bench=$(terraform output -json | jq -r .bench_ip.value)
+
+ssh ubuntu@$bench <<'EOF'
+target=$(cat ~/target);
+./consul-bench -rpc-addr $target:8300 -consul $target:8500 -register 20 -watchers 50:10s,75:10s,100:10s,150:10s,200:10s,250:10s -flap-interval 1s -plot;
+EOF
+
+scp ubuntu@$bench:points.png $DIR/plot.png

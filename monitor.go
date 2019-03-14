@@ -4,10 +4,11 @@ import (
 	"log"
 	"time"
 
+	"github.com/criteo/consul-bench/stats"
 	"github.com/shirou/gopsutil/process"
 )
 
-func Monitor(pid int32, stats chan Stat, done chan struct{}) {
+func Monitor(pid int32, statsC chan stats.Stat, done chan struct{}) {
 	proc, err := process.NewProcess(pid)
 	if err != nil {
 		log.Fatal(err)
@@ -25,7 +26,7 @@ func Monitor(pid int32, stats chan Stat, done chan struct{}) {
 				log.Println(err)
 			} else {
 				select {
-				case stats <- Stat{
+				case statsC <- stats.Stat{
 					Label: "CPU",
 					Value: p,
 				}:

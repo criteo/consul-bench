@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/criteo/consul-bench/stats"
 	consul "github.com/hashicorp/consul/api"
 )
 
@@ -32,7 +33,7 @@ func DeregisterServices(client *consul.Client, serviceName string) error {
 	return nil
 }
 
-func RegisterServices(client *consul.Client, serviceName string, count int, flapInterval time.Duration, stats chan Stat) error {
+func RegisterServices(client *consul.Client, serviceName string, count int, flapInterval time.Duration, statsC chan stats.Stat) error {
 	log.Printf("Registering %d %s instances...\n", count, serviceName)
 
 	checksTTL := flapInterval * 3
@@ -117,7 +118,7 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 	go func() {
 		for range time.Tick(time.Second) {
 			f := atomic.SwapInt32(&fps, 0)
-			stats <- Stat{"FPS", float64(f)}
+			statsC <- stats.Stat{"FPS", float64(f)}
 		}
 	}()
 

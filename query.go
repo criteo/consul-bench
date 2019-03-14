@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/criteo/consul-bench/stats"
 	"github.com/hashicorp/consul/agent/pool"
 	"github.com/hashicorp/consul/agent/structs"
 	consul "github.com/hashicorp/consul/api"
@@ -16,7 +17,7 @@ import (
 
 type queryFn func(uint64) (uint64, error)
 
-func RunQueries(fn queryFn, count int, lateRatio float64, stats chan Stat, done chan struct{}) error {
+func RunQueries(fn queryFn, count int, lateRatio float64, statsC chan stats.Stat, done chan struct{}) error {
 	log.Println("Starting", count, "watchers...")
 
 	var qps int32
@@ -29,6 +30,11 @@ func RunQueries(fn queryFn, count int, lateRatio float64, stats chan Stat, done 
 			var err error
 			var i int
 			for {
+				select {
+				case <-done:
+					return
+				default:
+				}
 				if rand.Float64() <= lateRatio {
 					atomic.AddInt32(&lateQps, 1)
 					index -= 50
@@ -53,8 +59,8 @@ func RunQueries(fn queryFn, count int, lateRatio float64, stats chan Stat, done 
 		for range time.Tick(time.Second) {
 			c := atomic.SwapInt32(&qps, 0)
 			lc := atomic.SwapInt32(&lateQps, 0)
-			stats <- Stat{"QPS", float64(c)}
-			stats <- Stat{"Late QPS", float64(lc)}
+			statsC <- stats.Stat{"QPS", float64(c)}
+			statsC <- stats.Stat{"Late QPS", float64(lc)}
 		}
 	}()
 	log.Println("Watchers started.")
