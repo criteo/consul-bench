@@ -89,7 +89,6 @@ func QueryServer(addr string, dc string, serviceName string, wait time.Duration,
 		LogOutput:  os.Stderr,
 		MaxTime:    time.Hour,
 		MaxStreams: 1000000,
-		TLSWrapper: nil,
 		ForceTLS:   false,
 	}
 
