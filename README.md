@@ -9,7 +9,7 @@ Autoregistered instances can be configured to flap (go between critical and pass
 ### With an existing service
 
 ```
-consul-bench -service my-service -watcher 300
+consul-bench -service my-service -watchers 300
 ```
 
 Will run 300 `/v1/health/service/my-service?wait=10m&stale` blocking queries in parallel.
@@ -17,7 +17,7 @@ Will run 300 `/v1/health/service/my-service?wait=10m&stale` blocking queries in 
 ### Auto register N service instances
 
 ```
-consul-bench -service my-fake-service -register 200 -flap-interval 10s -watcher 500
+consul-bench -service my-fake-service -register 200 -flap-interval 10s -watchers 500
 ```
 
 Will register 200 instances of "my-fake-service", make each instance flap every 10 seconds and run 500 blocking queries in parallel.
