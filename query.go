@@ -85,12 +85,12 @@ func QueryAgent(client *consul.Client, serviceName string, wait time.Duration, a
 
 func QueryServer(addr string, dc string, serviceName string, wait time.Duration, allowStale bool) queryFn {
 	connPool := &pool.ConnPool{
-		SrcAddr:    nil,
-		LogOutput:  os.Stderr,
-		MaxTime:    time.Hour,
-		MaxStreams: 1000000,
-		TLSWrapper: nil,
-		ForceTLS:   false,
+		SrcAddr:         nil,
+		LogOutput:       os.Stderr,
+		MaxTime:         time.Hour,
+		MaxStreams:      1000000,
+		TLSConfigurator: nil,
+		ForceTLS:        false,
 	}
 
 	args := structs.ServiceSpecificRequest{
