@@ -2,7 +2,7 @@ language: go
 go:
 - 1.x
 script:
-- go get -u
+- go get
 - go build
 sudo: false
 before_deploy:
