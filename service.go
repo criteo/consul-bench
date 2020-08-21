@@ -43,10 +43,7 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 
 	var tags []string
 	if serviceTags != "" {
-		tagsSplit := strings.Split(serviceTags, ",")
-		for _, t := range tagsSplit {
-			tags = append(tags, t)
-		}
+		tags = strings.Split(serviceTags, ",")
 	}
 
 	for instanceID := 0; instanceID < count; instanceID++ {
