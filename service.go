@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -32,12 +33,17 @@ func DeregisterServices(client *consul.Client, serviceName string) error {
 	return nil
 }
 
-func RegisterServices(client *consul.Client, serviceName string, count int, flapInterval time.Duration, stats chan Stat) error {
+func RegisterServices(client *consul.Client, serviceName string, count int, flapInterval time.Duration, serviceTags string, stats chan Stat) error {
 	log.Printf("Registering %d %s instances...\n", count, serviceName)
 
 	checksTTL := flapInterval * 3
 	if checksTTL == 0 {
 		checksTTL = 10 * time.Minute
+	}
+
+	var tags []string
+	if serviceTags != "" {
+		tags = strings.Split(serviceTags, ",")
 	}
 
 	for instanceID := 0; instanceID < count; instanceID++ {
@@ -52,6 +58,7 @@ func RegisterServices(client *consul.Client, serviceName string, count int, flap
 					DeregisterCriticalServiceAfter: checksTTL.String(),
 				},
 			},
+			Tags: tags,
 		})
 		if err != nil {
 			return err

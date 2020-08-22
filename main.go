@@ -17,6 +17,7 @@ func main() {
 	rpcAddr := flag.String("rpc-addr", "127.0.0.1:8300", "When using rpc, the consul rpc addr")
 	dc := flag.String("dc", "dc1", "When using rpc, the consul datacenter")
 	serviceName := flag.String("service", "srv", "Service to watch")
+	serviceTags := flag.String("tags", "", "Comma seperated list of tags to add to registered services")
 	registerInstances := flag.Int("register", 0, "Register N -service instances")
 	deregister := flag.Bool("deregister", false, "Deregister all instances of -service")
 	flapInterval := flag.Duration("flap-interval", 0, "If -register is given, flap each instance between critical and passing state on given interval")
@@ -44,7 +45,7 @@ func main() {
 	stats := make(chan Stat)
 
 	if *registerInstances > 0 {
-		err := RegisterServices(c, *serviceName, *registerInstances, *flapInterval, stats)
+		err := RegisterServices(c, *serviceName, *registerInstances, *flapInterval, *serviceTags, stats)
 		if err != nil {
 			log.Fatal(err)
 		}

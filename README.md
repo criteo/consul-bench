@@ -51,6 +51,8 @@ Usage of consul-bench:
     	When using rpc, the consul rpc addr (default "127.0.0.1:8300")
   -service string
     	Service to watch (default "srv")
+  -tags string
+    	Comma seperated list of tags to add to registered services (default "", -tags load-test,monitor=false)
   -token string
     	ACL token
   -watchers int
