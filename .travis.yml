@@ -1,19 +1,18 @@
 language: go
 go:
-- 1.x
+  - 1.15
 script:
-- go get
-- go build
+  - go build
 sudo: false
 before_deploy:
-- echo "Deploying $TRAVIS_TAG to GitHub releases"
-- tar czf consul-bench.tar.gz consul-bench
+  - echo "Deploying $TRAVIS_TAG to GitHub releases"
+  - tar czf consul-bench.tar.gz consul-bench
 deploy:
   provider: releases
-  api_key:
-    secure: IqBSyfPDigsnT46m28FDUEnbwScaglg+gJTzRnaHmQ3NNhNxSkEDuzzc+SxTKvJGPIMKopknkdi3di/Is7p8khdqqz/l81DBF2e+ZnYGmQWiqsko61II360vXf4o5meycY7xeijxbXyRgr1yc8e7Pq7ePTPpDIK39cogTDhLOkoYOZtczUoQ5Tx8WfQgGfpx8idbo00iVB0SvqxaPTlX1ET+9zlzuRLciVP3OI1cCB0upNtp67QRzRgWtsCwaJsLsnQDJVMpzgXSI3ppAWjoltnT4Kc4WTOxucn0wqNfDnaBgqoMCIgJ49eogsZnqnRXC90YV2tLjMWZ8TZ3HiNpm4uQEGYJ9cl1/JiPwUaK9cRLQ/dTdi7bHRip+0RZGEMDIclrQxhpX/rfsbWGgTMzLqGPaGfM3cipPR5e9JkFqNul7Q0UnRWtDc3rOv2XaBJn9XIAOkCSJYe7d8S64725P9aBD26pT7GPK+X2yf+tdOocX1tc0gq9C+QxsMWvbAphquroq/VZEssTML79GSqxON+LuocYrXp3YhFNAGztXHRGLWBWBWUgzzro9ee9qFHZY46YWwdD98IBcGPSGBYleW57F8EAfcwE/5HWDyOgF3I2kApQkPIQjqZUiF9Dj3UJGul3fe4gn+iHBP7PbIS67xG+EOCep5O5vLihZ34EJ+0=
   file: consul-bench.tar.gz
   skip_cleanup: true
+  api_key:
+    secure: 588LF4kjnZ9t8Bq5ZMGj+EDfEBxwGauuXt5KeS7VZFijwMLc+RjoaV/b5mBTl5zXyqExq1GSHX3MRhX5JDKsIL28ffLW0y9vdZsX/R2XJE0RQVGQmoyOUiGXYhS2ivBI4thscWqMSdAa06MVry3loVNxxctW8u4DQOSfQ3gBLUi70ui4flXYVLp7e2OZkN3dKSQ7HGtmCJWZ3Lot7O8GinTVt6DgKOLzhbZCNBBmPOlSSJ6JqSuD4hJ/k+eeECl7eTrK7O3c7kJEgOB6Hktvu5OlQInGRdnenQPKJzfBGsimP95t4J89gdtmzfLwuirPer1pgor5ARiBkZoGzf0AqFZVhgVxTTE1v5mtG5jrTNcL+jj9poipJkgZXCxy/NUscSA2Ff/Fz91LUvDYoYYmECEqgCB5Y+rvB9Ey3xQ2BnJYZEz59fYoSa17T6aVYJkHSny8MmwMKvJxrRcwgldJZ47KMuJr8wQshRMO2pw4TkW2+CZtJeSNKPfA6vFTxqP2djcF9AeGtm8UFX9cY54PLP9hlz2sXgkv6vX122cwatDr+wg+8NAzdt2WaE8hLU4ZP+c3VCNl48nTAdrw2kaOK8ovT/ImcXwFVqE/aYcegMbzdpxP1XO6SfXXYe3EiicZvw9auX53hoyngXg8nMqR5ej0qjFY98GjS628TswBAcY=
   on:
     repo: criteo/consul-bench
     tags: true
