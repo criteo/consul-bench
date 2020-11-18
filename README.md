@@ -41,6 +41,8 @@ Usage of consul-bench:
     	If -register is given, flap each instance between critical and passing state on given interval
   -query-stale
     	Run stale blocking queries
+  -cached
+      Run cached blocking queries
   -query-wait duration
     	Bloquing queries max wait time (default 10m0s)
   -register int
