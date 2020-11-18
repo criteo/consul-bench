@@ -68,12 +68,13 @@ func RunQueries(fn queryFn, count int, lateRatio float64, stats chan Stat, done 
 	return nil
 }
 
-func QueryAgent(client *consul.Client, serviceName string, wait time.Duration, allowStale bool) queryFn {
+func QueryAgent(client *consul.Client, serviceName string, wait time.Duration, allowStale bool, cached bool) queryFn {
 	return func(index uint64) (uint64, error) {
 		_, meta, err := client.Health().Service(serviceName, "", false, &consul.QueryOptions{
-			WaitTime:   wait,
-			WaitIndex:  index,
-			AllowStale: allowStale,
+			WaitTime:    wait,
+			WaitIndex:   index,
+			AllowStale:  allowStale,
+			UseCache: cached,
 		})
 		if err != nil {
 			return 0, err
@@ -83,7 +84,7 @@ func QueryAgent(client *consul.Client, serviceName string, wait time.Duration, a
 	}
 }
 
-func QueryServer(addr string, dc string, serviceName string, wait time.Duration, allowStale bool) queryFn {
+func QueryServer(addr string, dc string, serviceName string, wait time.Duration) queryFn {
 	connPool := &pool.ConnPool{
 		SrcAddr:    nil,
 		LogOutput:  os.Stderr,

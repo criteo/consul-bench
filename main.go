@@ -23,6 +23,7 @@ func main() {
 	flapInterval := flag.Duration("flap-interval", 0, "If -register is given, flap each instance between critical and passing state on given interval")
 	wait := flag.Duration("query-wait", 10*time.Minute, "Bloquing queries max wait time")
 	stale := flag.Bool("query-stale", false, "Run stale blocking queries")
+	cached := flag.Bool("cached", false, "Run cached blocking queries")
 	token := flag.String("token", "", "ACL token")
 	watchers := flag.Int("watchers", 1, "Number of concurrnet watchers on service")
 	monitor := flag.Int("monitor", 0, "Consul PID")
@@ -77,9 +78,9 @@ func main() {
 
 	var qf queryFn
 	if !*useRPC {
-		qf = QueryAgent(c, *serviceName, *wait, *stale)
+		qf = QueryAgent(c, *serviceName, *wait, *stale, *cached)
 	} else {
-		qf = QueryServer(*rpcAddr, *dc, *serviceName, *wait, *stale)
+		qf = QueryServer(*rpcAddr, *dc, *serviceName, *wait)
 	}
 
 	wg.Add(1)
